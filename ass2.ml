@@ -11,7 +11,7 @@ let rec sum list = match list with
 
 let rec prod list = match list with
 | [] -> 1.0
-| head::tail -> head *. sum tail;;
+| head::tail -> head *. prod tail;;
 
 let rec take n = function
   [] -> []
@@ -61,7 +61,8 @@ let mutate solution div = map (fun x ->
 let rec life elders = function
   0 -> elders
 | n -> 
-    let children = map (fun x -> mutate x (float_of_int n)) (orgy elders 100) in
+    let mutation_c = (float_of_int n) /. 50.0 in
+    let children = map (fun x -> mutate x mutation_c) (orgy elders 100) in
     let population = elders @ children in
     let sorted = sort compare ((map (fun i -> (fitness2 i, i))) population) in
     let (best_f, best_i) = split (take 100 sorted) in
@@ -72,8 +73,12 @@ let rec life elders = function
 
 let _ =
   Random.init 0;
+  let iterations = 1000 in
   let initial = generate_solutions (-. 1000.0) 1000.0 30 100 in
-  let solutions = life initial 1000 in
-  (* print_float_list_list solutions; *)
-  Printf.printf "Fitness: %f\n" (fitness2 (hd solutions));
+  let solutions = life initial iterations in
+
+  Printf.printf "Iterations: %d\n" iterations;
+  print_string "Solution vector: ";
+  print_float_list (hd solutions);
+  Printf.printf "\nFitness: %f\n" (fitness2 (hd solutions));
 ;
