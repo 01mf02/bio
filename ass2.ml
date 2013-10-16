@@ -5,13 +5,8 @@ open List;;
 let rec range_excl i j = if i >= j then [] else i :: (range_excl (i+1) j);;
 let rec range_incl i j = if i >  j then [] else i :: (range_incl (i+1) j);;
 
-let rec sum list = match list with
-| [] -> 0.0
-| head::tail -> head +. sum tail;;
-
-let rec prod list = match list with
-| [] -> 1.0
-| head::tail -> head *. prod tail;;
+let rec sum  = fold_left ( +. ) 0.0;;
+let rec prod = fold_left ( *. ) 1.0;;
 
 let rec take n = function
   [] -> []
