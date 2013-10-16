@@ -53,10 +53,9 @@ let rec orgy parents = function
   0 -> []
 | n -> (recombine (random_from_list parents) (random_from_list parents))::(orgy parents (n-1));;
 
-let mutate solution div = map (fun x ->
-  if Random.float 1.0 < 1.0 /. float_of_int (length solution) then
-    x +. (Random.float (div *. 2.0)) -. div
-  else x) solution;;
+let mutate v div = map (fun x ->
+  if Random.int (length v) = 0 then x +. (Random.float (div *. 2.0)) -. div
+  else x) v;;
 
 let rec life elders = function
   0 -> elders
