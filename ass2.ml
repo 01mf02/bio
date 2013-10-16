@@ -58,12 +58,11 @@ let mutate solution div = map (fun x ->
     x +. (Random.float (div *. 2.0)) -. div
   else x) solution;;
 
-let rec life solution = function
-  0 -> solution
+let rec life elders = function
+  0 -> elders
 | n -> 
-    let offspring = orgy solution 100 in
-    let mutated = map (fun x -> mutate x (float_of_int n)) offspring in
-    let population = solution @ mutated in
+    let children = map (fun x -> mutate x (float_of_int n)) (orgy elders 100) in
+    let population = elders @ children in
     let sorted = sort compare ((map (fun i -> (fitness2 i, i))) population) in
     let (best_f, best_i) = split (take 100 sorted) in
     life best_i (n-1);;
@@ -75,6 +74,6 @@ let _ =
   Random.init 0;
   let initial = generate_solutions (-. 1000.0) 1000.0 30 100 in
   let solutions = life initial 1000 in
-  print_float_list_list solutions;
+  (* print_float_list_list solutions; *)
   Printf.printf "Fitness: %f\n" (fitness2 (hd solutions));
 ;
