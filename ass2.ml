@@ -43,11 +43,6 @@ let fitness2 v =
 
 (* Evolution functions *)
 
-let mutate solution div = map (fun x ->
-  if Random.float 1.0 < 1.0 /. float_of_int (length solution) then
-    x +. (Random.float (div *. 2.0)) -. div
-  else x) solution;;
-
 let rec generate_solutions min max dim = function
   0 -> []
 | n -> (random_float_list min max dim) :: generate_solutions min max dim (n-1);;
@@ -57,6 +52,11 @@ let recombine s1 s2 = map (fun (x1, x2) -> (x1 +. x2) /. 2.0) (combine s1 s2);;
 let rec orgy parents = function
   0 -> []
 | n -> (recombine (random_from_list parents) (random_from_list parents))::(orgy parents (n-1));;
+
+let mutate solution div = map (fun x ->
+  if Random.float 1.0 < 1.0 /. float_of_int (length solution) then
+    x +. (Random.float (div *. 2.0)) -. div
+  else x) solution;;
 
 let rec life solution = function
   0 -> solution
