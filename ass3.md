@@ -23,7 +23,7 @@ We take an initial list of the format [0, 1, ..., n] and generate a predefined n
 Recombination
 -------------
 
-Recombination proved to be a hard nut for the list representation. We decided to use single point crossover, but of course there we had to eliminate duplicates. For this, we wrote a horribly complex function which counts the number of appearances of each element of the crossed-over list, then replaces double appearances by such elements which do not appear at all, thus restoring all elements of the original lists.
+Recombination proved to be a hard nut for the list representation. We decided to use single point crossover between random parents, but of course there we had to eliminate duplicates. For this, we wrote a horribly complex function which counts the number of appearances of each element of the crossed-over list, then replaces double appearances by such elements which do not appear at all, thus restoring all elements of the original lists.
 
 
 Mutation
@@ -79,7 +79,7 @@ Quite similar to approach no. 1, but we convert the resulting lists directly to 
 Recombination
 -------------
 
-At this point credit is due to Andreas Kochesser, who came up with an idea to recombine two trees whilst avoiding duplicates and missing elements. Please see his paper for an excellent description of the algorithm. :)
+At this point credit is due to Andreas Kochesser, who came up with an algorithm to recombine two trees whilst avoiding duplicates and missing elements. Please see his paper for an excellent description of the algorithm. :)
 
 Roughly, we recombine a subtree of the male parent with the tree of the female, where the subtree of the male is chosen randomly.
 
