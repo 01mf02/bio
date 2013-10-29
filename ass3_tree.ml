@@ -24,7 +24,13 @@ let rec rotate_ccw = function
 | Node (x, left, Node (z, zl, zr)) -> Node (z, Node (x, left, zl), zr)
 | Node (x, left, Leaf) as n -> n;;
 
-let draw_tree tree =
+let rec remove_geq_from_tree n = function
+| Leaf -> Leaf
+| Node (x, left, right) ->
+  if x >= n then remove_geq_from_tree n left
+  else Node (x, left, remove_geq_from_tree n right);;
+
+let print_tree tree =
   let rec print indent tree =
     match tree with
        Leaf -> ();
@@ -82,10 +88,10 @@ let rec generate_solutions l = function
 let rec recombine = function
 | Node (x, xl, xr) as tx, (Node (y, yl, yr) as ty) ->
   if x = y then Node (x, recombine (xl, yl), recombine (xr, yr))
-  else if x < y then Node (y, recombine (tx, yl), yr)
+  else if x < y then Node (y, recombine (remove_geq_from_tree y tx, yl), yr)
   else recombine (ty, tx)
-| (Leaf, t) -> t
-| (t, Leaf) -> t;;
+| (Leaf, t) -> Leaf
+| (t, Leaf) -> Leaf;;
 
 let rec orgy parents = function
   0 -> []
@@ -115,16 +121,15 @@ let _ =
   let initial = generate_solutions l 100 in
   let solutions = life initial iterations in
 
-  let t1 = tree_of_list [3; 1; 2; 4] in
+  (* let t1 = tree_of_list [3; 1; 2; 4] in
   let t2 = tree_of_list [2; 1; 4; 3] in
-  draw_tree t1;
-  draw_tree t2;
-  draw_tree (recombine (t1, t2));
-  
+  print_tree t1;
+  print_tree t2;
+  print_tree (recombine (t1, t2)); *)
 
   Printf.printf "Iterations: %d\n" iterations;
   (* print_string "Solution vector: ";
   print_float_list (hd solutions); *)
-  draw_tree (hd solutions);
+  print_tree (hd solutions);
   Printf.printf "\nDepth: %d\n" (depth (hd solutions));
 ;
