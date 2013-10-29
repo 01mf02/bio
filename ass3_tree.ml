@@ -1,12 +1,11 @@
 open List;;
 
-module IntMap = Map.Make (Nativeint);;
+let list_elements = 14;;
 
+(* Binary tree *)
 
-(* Binary search tree *)
-
-type 'a bstree = 
-| Node of 'a * 'a bstree * 'a bstree
+type 'a btree = 
+| Node of 'a * 'a btree * 'a btree
 | Leaf
 
 let rec insert x = function
@@ -19,16 +18,29 @@ let rec insert x = function
   else
     node
 
-let rec rotate_ccw = function
-| Leaf -> Leaf
-| Node (x, left, Node (z, zl, zr)) -> Node (z, Node (x, left, zl), zr)
-| Node (x, left, Leaf) as n -> n;;
+let rec rotate_cw = function
+| Node (x, Node (y, yl, yr), right) -> Node (y, yl, Node (x, yr, right))
+| t -> t;;
 
-let rec remove_geq_from_tree n = function
+let rec rotate_ccw = function
+| Node (x, left, Node (z, zl, zr)) -> Node (z, Node (x, left, zl), zr)
+| t -> t;;
+
+let rec size_of_tree = function
+| Node (x, left, right) -> 1 + size_of_tree left + size_of_tree right
+| Leaf -> 0;;
+
+let rec keep_smaller_of_tree n = function
 | Leaf -> Leaf
 | Node (x, left, right) ->
-  if x >= n then remove_geq_from_tree n left
-  else Node (x, left, remove_geq_from_tree n right);;
+  if x < n then Node (x, left, keep_smaller_of_tree n right)
+  else keep_smaller_of_tree n left;;
+
+let rec keep_greater_of_tree n = function
+| Leaf -> Leaf
+| Node (x, left, right) ->
+  if x > n then Node (x, keep_greater_of_tree n left, right)
+  else keep_greater_of_tree n right;;
 
 let print_tree tree =
   let rec print indent tree =
@@ -43,17 +55,29 @@ let print_tree tree =
   in
   print "" tree
 
+let rec execute_in_tree f x = function
+| Leaf -> Leaf
+| Node (v, left, right) as node ->
+  if v = x then f node
+  else if v < x then Node (v, left, execute_in_tree f x right)
+  else Node (v, execute_in_tree f x left, right);;
+
 let rec depth = function
 | Leaf -> 0
 | Node (_, left, right) -> 1 + max (depth left) (depth right);;
+
+let rec elements_at_depth d = function
+| Leaf -> 0
+| Node (_, left, right) ->
+  if d <= 1 then 1
+  else elements_at_depth (d-1) left +
+       elements_at_depth (d-1) right;;
 
 let depthsum =
   let rec aux d = function
   | Leaf -> d
   | Node (_, left, right) -> d + aux (d+1) left + aux (d+1) right in
   aux 0;;
-
-
 
 let tree_of_list l = fold_left (fun t l -> insert l t) Leaf l;;
 
@@ -74,9 +98,10 @@ let shuffle d =
   let sond = List.sort compare nd in
   List.map snd sond
 
+
 (* Fitness functions *)
 
-let fitness = depthsum;;
+let fitness t = let d = depth t in (d, elements_at_depth d t);;
 
 
 (* Evolution functions *)
@@ -85,21 +110,35 @@ let rec generate_solutions l = function
   0 -> []
 | n -> tree_of_list (shuffle l) :: generate_solutions l (n-1);;
 
-let rec recombine = function
+let rec recombine1 = function
 | Node (x, xl, xr) as tx, (Node (y, yl, yr) as ty) ->
-  if x = y then Node (x, recombine (xl, yl), recombine (xr, yr))
-  else if x < y then Node (y, recombine (remove_geq_from_tree y tx, yl), yr)
-  else recombine (ty, tx)
-| (Leaf, t) -> Leaf
-| (t, Leaf) -> Leaf;;
+  if x = y then Node (x, recombine1 (xl, yl), recombine1 (xr, yr))
+  else if x < y then Node (y, recombine1 (keep_smaller_of_tree y tx, yl), yr)
+  else recombine1 (ty, tx)
+| _ -> Leaf;;
+
+let rec recombine2 = function
+| Node (x, xl, xr) as tx, (Node (y, yl, yr) as ty) ->
+  if x = y then Node (x, recombine2 (xl, yl), recombine2 (xr, yr))
+  else if x < y then Node (x, xl, recombine2 (keep_greater_of_tree x ty, xr))
+  else recombine2 (ty, tx)
+| _ -> Leaf;;
+
+let recombine = if Random.bool () then recombine1 else recombine2;;
+
+let sex m f =
+  execute_in_tree (fun sm -> recombine (sm, f)) (Random.int list_elements) m;;
 
 let rec orgy parents = function
   0 -> []
-| n -> (recombine (random_from_list parents, random_from_list parents))::(orgy parents (n-1));;
+| n -> (sex (random_from_list parents) (random_from_list parents))::(orgy parents (n-1));;
+
+let rec mutate_solution = execute_in_tree
+  (if Random.bool () then rotate_ccw else rotate_cw) ;;
 
 let rec mutate v = function
 | 0 -> v
-| n -> mutate (v) (n-1);;
+| n -> mutate (mutate_solution (Random.int list_elements) v) (n-1);;
 
 let rec life elders = function
   0 -> elders
@@ -108,7 +147,8 @@ let rec life elders = function
     let population = elders @ children in
     let sorted = sort compare ((map (fun i -> (fitness i, i))) population) in
     let (best_f, best_i) = split (take 100 sorted) in
-    Printf.printf "Best fitness: %d\n" (hd best_f);
+    Printf.printf "Best fitness: %d, %d\n" (fst (hd best_f)) (snd (hd best_f));
+    flush stdout;
     life best_i (n-1);;
 
 
@@ -116,8 +156,8 @@ let rec life elders = function
 
 let _ =
   Random.init 1;
-  let l = range_incl 0 10 in
-  let iterations = 50 in
+  let l = range_excl 0 list_elements in
+  let iterations = 1000 in
   let initial = generate_solutions l 100 in
   let solutions = life initial iterations in
 
@@ -128,8 +168,7 @@ let _ =
   print_tree (recombine (t1, t2)); *)
 
   Printf.printf "Iterations: %d\n" iterations;
-  (* print_string "Solution vector: ";
-  print_float_list (hd solutions); *)
+  print_string "Solution tree:\n";
   print_tree (hd solutions);
   Printf.printf "\nDepth: %d\n" (depth (hd solutions));
 ;
