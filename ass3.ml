@@ -119,6 +119,7 @@ let rec life elders = function
     let sorted = sort compare ((map (fun i -> (fitness i, i))) population) in
     let (best_f, best_i) = split (take 100 sorted) in
     Printf.printf "Best fitness: %d\n" (hd best_f);
+    flush stdout;
     life best_i (n-1);;
 
 
@@ -127,7 +128,7 @@ let rec life elders = function
 let _ =
   Random.init 0;
   let l = range_incl 0 100 in
-  let iterations = 50 in
+  let iterations = 500 in
   let initial = generate_solutions l 100 in
   let solutions = life initial iterations in
 

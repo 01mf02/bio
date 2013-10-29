@@ -1,6 +1,6 @@
 open List;;
 
-let list_elements = 15;;
+let list_elements = 100;;
 
 (* Binary tree *)
 
@@ -157,8 +157,8 @@ let rec life elders = function
 let _ =
   Random.init 1;
   let l = range_excl 0 list_elements in
-  let iterations = 100 in
-  let initial = generate_solutions l 1000 in
+  let iterations = 500 in
+  let initial = generate_solutions l 100 in
   let solutions = life initial iterations in
 
   (* let t1 = tree_of_list [3; 1; 2; 4] in
