@@ -1,6 +1,6 @@
 open List;;
 
-let list_elements = 14;;
+let list_elements = 15;;
 
 (* Binary tree *)
 
@@ -110,21 +110,21 @@ let rec generate_solutions l = function
   0 -> []
 | n -> tree_of_list (shuffle l) :: generate_solutions l (n-1);;
 
-let rec recombine1 = function
+let rec recombine_greater = function
 | Node (x, xl, xr) as tx, (Node (y, yl, yr) as ty) ->
-  if x = y then Node (x, recombine1 (xl, yl), recombine1 (xr, yr))
-  else if x < y then Node (y, recombine1 (keep_smaller_of_tree y tx, yl), yr)
-  else recombine1 (ty, tx)
+  if x = y then Node (x, recombine_greater (xl, yl), recombine_greater (xr, yr))
+  else if x < y then Node (y, recombine_greater (keep_smaller_of_tree y tx, yl), yr)
+  else recombine_greater (ty, tx)
 | _ -> Leaf;;
 
-let rec recombine2 = function
+let rec recombine_smaller = function
 | Node (x, xl, xr) as tx, (Node (y, yl, yr) as ty) ->
-  if x = y then Node (x, recombine2 (xl, yl), recombine2 (xr, yr))
-  else if x < y then Node (x, xl, recombine2 (keep_greater_of_tree x ty, xr))
-  else recombine2 (ty, tx)
+  if x = y then Node (x, recombine_smaller (xl, yl), recombine_smaller (xr, yr))
+  else if x < y then Node (x, xl, recombine_smaller (keep_greater_of_tree x ty, xr))
+  else recombine_smaller (ty, tx)
 | _ -> Leaf;;
 
-let recombine = if Random.bool () then recombine1 else recombine2;;
+let recombine = if Random.bool () then recombine_greater else recombine_smaller;;
 
 let sex m f =
   execute_in_tree (fun sm -> recombine (sm, f)) (Random.int list_elements) m;;
@@ -134,7 +134,7 @@ let rec orgy parents = function
 | n -> (sex (random_from_list parents) (random_from_list parents))::(orgy parents (n-1));;
 
 let rec mutate_solution = execute_in_tree
-  (if Random.bool () then rotate_ccw else rotate_cw) ;;
+  (if Random.bool () then rotate_ccw else rotate_cw);;
 
 let rec mutate v = function
 | 0 -> v
@@ -157,8 +157,8 @@ let rec life elders = function
 let _ =
   Random.init 1;
   let l = range_excl 0 list_elements in
-  let iterations = 1000 in
-  let initial = generate_solutions l 100 in
+  let iterations = 100 in
+  let initial = generate_solutions l 1000 in
   let solutions = life initial iterations in
 
   (* let t1 = tree_of_list [3; 1; 2; 4] in
