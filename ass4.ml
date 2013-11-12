@@ -33,6 +33,8 @@ let griewank v =
   (lprod (map (fun (x, i) -> cos (x /. (sqrt (float_of_int i)))) xi)) +.
   1.0;;
 
+let fitness = griewank;;
+
 
 (* Swarm functions *)
 
@@ -42,14 +44,23 @@ let generate_particle range_x range_v dim =
   let best = x in
   (x, v, best);;
 
-let rec generate_particles range_x range_v dim = function
+let rec generate_swarm range_x range_v dim = function
   0 -> []
 | n -> (generate_particle range_x range_v dim) :: 
-        generate_particles range_x range_v dim (n-1);;
+        generate_swarm range_x range_v dim (n-1);;
 
-let update_particle gbest (px, pv, pbest) =
-  let w = 0.4 in         (* inertia weight *)
-  let c1 = 2.0 in        (* cognitive acceleration coefficient *)
+let swarm_best s = foldl1 min
+  (map (fun (px, pv, pbest) -> (fitness pbest, pbest)) s);;
+
+let particle_best x1 x2 = foldl1 min
+  (map (fun px -> (fitness px, px)) [x1; x2]);;
+
+let outside_bounds bound = exists (fun x -> x > bound || x < (-. bound));;
+let clip_to_bounds bound = map (fun x -> max  (min x bound)  (-. bound));;
+
+let update_particle sbest bound (px, pv, pbest) =
+  let w  = 0.4 in        (* inertia weight *)
+  let c1 = 1.0 in        (* cognitive acceleration coefficient *)
   let c2 = 4.0 -. c1 in  (* social acceleration coefficient *)
 
   let r1 = Random.float 1.0 in
@@ -57,34 +68,41 @@ let update_particle gbest (px, pv, pbest) =
 
   let new_v = foldl1 vsum [sprod w pv;
     sprod (c1 *. r1) (vdiff pbest px);
-    sprod (c2 *. r2) (vdiff gbest px)] in
+    sprod (c2 *. r2) (vdiff sbest px)] in
   let new_x = vsum px new_v in
-  let new_best = pbest (* TODO *) in
-  (new_x, new_v, new_best);;
 
-let global_best s = foldl1 max (map (fun (px, pv, pbest) -> pbest) s);;
+  let new_v' =
+    if outside_bounds bound new_x then sprod (-. 1.0) new_v
+    else new_v in
 
-let rec fly swarm = function
+  let new_x' = clip_to_bounds bound new_x in
+
+  let new_best = snd (particle_best pbest new_x') in
+  (new_x', new_v', new_best);;
+
+let rec fly swarm bound = function
 | 0 -> swarm
 | n ->
-    let gbest = global_best swarm in
-    let updated = map (update_particle gbest) swarm in
-    fly updated (n-1);;
+    let sbest = snd (swarm_best swarm) in
+    let updated = map (update_particle sbest bound) swarm in
+    fly updated bound (n-1);;
 
 
 (* Main *)
 
 let _ =
   Random.init 0;
-  let iterations = 1000 in
+  let iterations = 100 in
   let dimension = 30 in
   let population = 50 in
 
   let range_x = 600.0 in
-  let range_v = 0.0 in
+  let range_v = 100.0 in
 
-  let initial = generate_particles range_x range_v dimension population in
-  let final = fly initial iterations in
+  let initial = generate_swarm range_x range_v dimension population in
+  let final = fly initial range_x iterations in
+  let best = swarm_best final in
 
   Printf.printf "Iterations: %d\n" iterations;
+  Printf.printf "Best value: %f\n" (fst best);
 ;
