@@ -1,5 +1,5 @@
 ---
-title: Assignment 4: Particle Swarm Optimization
+title: Assignment 4 --- Particle Swarm Optimization
 author: Michael Färber
 ---
 
