@@ -34,6 +34,7 @@ let griewank v =
   1.0;;
 
 let fitness = griewank;;
+let fitness_better = min;;
 
 
 (* Swarm functions *)
@@ -49,10 +50,10 @@ let rec generate_swarm range_x range_v dim = function
 | n -> (generate_particle range_x range_v dim) :: 
         generate_swarm range_x range_v dim (n-1);;
 
-let swarm_best s = foldl1 min
+let swarm_best s = foldl1 fitness_better
   (map (fun (px, pv, pbest) -> (fitness pbest, pbest)) s);;
 
-let particle_best x1 x2 = foldl1 min
+let particle_best x1 x2 = foldl1 fitness_better
   (map (fun px -> (fitness px, px)) [x1; x2]);;
 
 let outside_bounds bound = exists (fun x -> x > bound || x < (-. bound));;
@@ -60,7 +61,7 @@ let clip_to_bounds bound = map (fun x -> max  (min x bound)  (-. bound));;
 
 let update_particle sbest bound (px, pv, pbest) =
   let w  = 0.4 in        (* inertia weight *)
-  let c1 = 1.0 in        (* cognitive acceleration coefficient *)
+  let c1 = 0.4 in        (* cognitive acceleration coefficient *)
   let c2 = 4.0 -. c1 in  (* social acceleration coefficient *)
 
   let r1 = Random.float 1.0 in
@@ -92,12 +93,12 @@ let rec fly swarm bound = function
 
 let _ =
   Random.init 0;
-  let iterations = 100 in
+  let iterations = 1000 in
   let dimension = 30 in
-  let population = 50 in
+  let population = 300 in
 
   let range_x = 600.0 in
-  let range_v = 100.0 in
+  let range_v = 0.0 in
 
   let initial = generate_swarm range_x range_v dimension population in
   let final = fly initial range_x iterations in
