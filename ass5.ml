@@ -39,6 +39,24 @@ let vdist v1 v2 =
   let d = vdiff v1 v2 in sqrt (vdotprod d d);;
 
 
+(* Optimization functions *)
+
+let calculate_j mod_rest n =
+  let rec f j acc =
+    if j > n then acc
+    else if j mod 2 = mod_rest then f (j+1) (j::acc)
+    else f (j+1) acc in
+  f 2 [];;
+
+let calculate_j1 n = calculate_j 1 n;;
+
+let f1 = function
+| [] -> raise (Failure "Input vector empty")
+| (x1::xt as x) ->
+  let j1 = calculate_j1 (length x) in
+  x1 +. (2.0 /. float_of_int (length j1));;
+
+
 (* MOEA/D *)
 
 let weight_neighbors (ws : weights) t =
@@ -56,14 +74,14 @@ let reproduce s1 s2 = s1;;
 (* weighted sum approach *)
 let g_ws x ws fs = lsum (map (fun (w, f) -> w *. (f x)) (combine ws fs));;
 
-let update neighbors solutions weights bests fs ep =
+let update solutions neighbors weights (*bests*) fs ep =
   (* reproduction *)
   let k = random_from_list neighbors in
   let l = random_from_list neighbors in
   let y = reproduce (nth solutions k) (nth solutions l) in
   
   (* update bests *)
-  let bests' = map (fun (b, f) -> max b (f y)) (combine bests fs) in
+  (*let bests' = map (fun (b, f) -> max b (f y)) (combine bests fs) in*)
 
   (* update neighboring solutions *)
   let solutions' = map_indices (fun i s ->
@@ -74,21 +92,35 @@ let update neighbors solutions weights bests fs ep =
   let fsy = map (fun f -> f y) fs in
   let ep' = filter (fun v -> not (dominates fsy v)) ep in
   let ep'' = if exists (fun v -> dominates v fsy) ep' then ep' else fsy::ep' in
-  ep'';;
+  (solutions', ep'');;
+
+let rec update_all solutions_init neighbors weights fs ep_init =
+  let rec f i solutions ep =
+    if i >= length solutions then (solutions, ep)
+    else
+      let (solutions', ep') = update solutions (nth neighbors i) weights fs ep in
+      f (succ i) solutions' ep' in
+
+  f 0 solutions_init ep_init;;
 
 
-let rec moead ep population = function
+let rec moead solutions neighbors weights fs ep = function
 | 0 -> ep
 | n ->
-    moead ep population (n-1)
+    let (solutions', ep') = update_all solutions neighbors weights fs ep in
+    moead solutions neighbors weights fs ep (n-1);;
 
 let _ =
-  (* weight vector *)
-  let wv = [] in
+  let neighborhood_size = 10 in
+  let iterations = 100 in
 
-  let initial_population = [] in
+  let weights = [] in
+  let neighbors = weight_neighbors weights neighborhood_size in
+  let initial_solutions = [] in
 
-  let ep = moead [] initial_population 10 in
+  let fs = [] in
+
+  let ep = moead initial_solutions neighbors weights fs [] iterations in
 
   Printf.printf "Hello world!\n";
 ;
