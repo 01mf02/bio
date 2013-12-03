@@ -1,11 +1,5 @@
 open List;;
 
-type point = float list;;
-type weight = float list;;
-type population = point array;;
-type weights = weight list;;
-
-
 (* List/vector helper functions *)
 
 let rec take n = function
@@ -17,6 +11,10 @@ let safe_tl = function
 | hd::tl -> tl;;
 
 let random_from_list l = nth l (Random.int (length l));;
+
+let rec random_float_list min max = function
+  0 -> []
+| n -> (Random.float (max -. min) +. min) :: (random_float_list min max (n-1));;
 
 let rec range_excl i j = if i >= j then [] else i :: (range_excl (i+1) j);;
 let rec range_incl i j = if i >  j then [] else i :: (range_incl (i+1) j);;
@@ -74,10 +72,19 @@ let f2 x =
 
 (* MOEA/D *)
 
-let weight_neighbors (ws : weights) t =
+let rec generate_solutions min max dim = function
+  0 -> []
+| n -> (random_float_list min max dim) :: generate_solutions min max dim (n-1);;
+
+let calculate_weight_vectors2 n =
+  let l = range_incl 0 n in
+  let nf = float_of_int n in
+  map (fun x -> let xf = float_of_int x in [xf /. nf; (nf -. xf) /. nf]) l;;
+
+let weight_neighbors weights t =
   map (fun w1 ->
-    let dists = mapi (fun i2 w2 -> (vdist w1 w2, i2)) ws in
-    map snd (take t (safe_tl (sort compare dists)))) ws;;
+    let dists = mapi (fun i2 w2 -> (vdist w1 w2, i2)) weights in
+    map snd (take t (safe_tl (sort compare dists)))) weights;;
 
 let dominates v1 v2 =
   let c = combine v1 v2 in
@@ -123,17 +130,19 @@ let rec moead solutions neighbors weights fs ep = function
 | 0 -> ep
 | n ->
     let (solutions', ep') = update_all solutions neighbors weights fs ep in
-    moead solutions neighbors weights fs ep (n-1);;
+    moead solutions' neighbors weights fs ep' (n-1);;
 
 let _ =
-  let neighborhood_size = 10 in
+  let solutions_n = 300 in
+  let neighborhood_size = 2 in
   let iterations = 100 in
+  let vec_dimension = 10 in
 
-  let weights = [] in
+  let weights = calculate_weight_vectors2 solutions_n in
   let neighbors = weight_neighbors weights neighborhood_size in
-  let initial_solutions = [] in
+  let initial_solutions = generate_solutions 0.0 1.0 vec_dimension solutions_n in
 
-  let fs = [] in
+  let fs = [f1; f2] in
 
   let ep = moead initial_solutions neighbors weights fs [] iterations in
 
