@@ -18,6 +18,10 @@ let safe_tl = function
 
 let random_from_list l = nth l (Random.int (length l));;
 
+let rec range_excl i j = if i >= j then [] else i :: (range_excl (i+1) j);;
+let rec range_incl i j = if i >  j then [] else i :: (range_incl (i+1) j);;
+
+
 (* taken from OCaml 4.00 *)
 let rec mapi i f = function
 | [] -> []
@@ -41,20 +45,31 @@ let vdist v1 v2 =
 
 (* Optimization functions *)
 
-let calculate_j mod_rest n =
-  let rec f j acc =
-    if j > n then acc
-    else if j mod 2 = mod_rest then f (j+1) (j::acc)
-    else f (j+1) acc in
-  f 2 [];;
+let calculate_j1 n = filter (fun x -> x mod 2 = 1) (range_incl 2 n);;
+let calculate_j2 n = filter (fun x -> x mod 2 = 0) (range_incl 2 n);;
 
-let calculate_j1 n = calculate_j 1 n;;
+let f12sum jn x x1 nf = lsum (map (fun j ->
+	let jf = float_of_int j in
+	let xj = float_of_int (nth x j) in
+	let fraction = (3.0 *. (jf-.2.0) /. (nf-.2.0)) in
+	let exponent = 0.5 *. (1.0 +. fraction) in
+	(xj -. x1**exponent)**2.0) jn);;
 
-let f1 = function
-| [] -> raise (Failure "Input vector empty")
-| (x1::xt as x) ->
-  let j1 = calculate_j1 (length x) in
-  x1 +. (2.0 /. float_of_int (length j1));;
+let f12common x =
+  let n  = length x in
+  let nf = float_of_int n in
+  let x1 = float_of_int (hd x) in
+  (n, nf, x1);;
+
+let f1 x =
+  let (n, nf, x1) = f12common x in
+  let j1 = calculate_j1 n in
+  x1 +. (2.0 /. float_of_int (length j1)) *. f12sum j1 x x1 nf;;
+
+let f2 x =
+  let (n, nf, x1) = f12common x in
+  let j2 = calculate_j2 n in
+  1.0 -. sqrt x1 +. (2.0 /. float_of_int (length j2)) *. f12sum j2 x x1 nf;;
 
 
 (* MOEA/D *)
