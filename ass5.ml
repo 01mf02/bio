@@ -48,7 +48,7 @@ let calculate_j2 n = filter (fun x -> x mod 2 = 0) (range_incl 2 n);;
 
 let f12sum jn x x1 nf = lsum (map (fun j ->
 	let jf = float_of_int j in
-	let xj = float_of_int (nth x j) in
+	let xj = nth x j in
 	let fraction = (3.0 *. (jf-.2.0) /. (nf-.2.0)) in
 	let exponent = 0.5 *. (1.0 +. fraction) in
 	(xj -. x1**exponent)**2.0) jn);;
@@ -56,7 +56,7 @@ let f12sum jn x x1 nf = lsum (map (fun j ->
 let f12common x =
   let n  = length x in
   let nf = float_of_int n in
-  let x1 = float_of_int (hd x) in
+  let x1 = hd x in
   (n, nf, x1);;
 
 let f1 x =
