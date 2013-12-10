@@ -21,10 +21,10 @@ We use the following parameters:
 
 To obtain results, we first run our program:
 
-  ocaml ass5.ml > ass5.dat
+    ocaml ass5.ml > ass5.dat
 
 This takes about 50secs on my computer. Then, we plot the output:
 
-  gnuplot -e "set terminal png; plot 'ass5.dat', 'LZ09_F1.pf'" > ass5.png
+    gnuplot -e "set terminal png; plot 'ass5.dat', 'LZ09_F1.pf'" > ass5.png
 
 In this command, LZ09_F1.pf contains the Pareto front for the given problem. As we can see, the data produced by our program matches the Pareto front quite well. For a greater vector dimension, we also have to increase the number of iterations to get good output.
