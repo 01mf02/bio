@@ -38,11 +38,9 @@ let lprod = fold_left ( *. ) 1.0;;
 
 let vsum  v1 v2 = map (fun (x, y) -> x +. y) (combine v1 v2);;
 let vdiff v1 v2 = map (fun (x, y) -> x -. y) (combine v1 v2);;
-let vdotprod v1 v2 =
-  fold_left (fun a (x1, x2) -> a +. (x1 *. x2)) 0.0 (combine v1 v2);;
-
-let vdist v1 v2 =
-  let d = vdiff v1 v2 in sqrt (vdotprod d d);;
+let vprod v1 v2 = map (fun (x, y) -> x *. y) (combine v1 v2);;
+let vdotprod v1 v2 = lsum (vprod v1 v2);;
+let vdist v1 v2 = let d = vdiff v1 v2 in sqrt (vdotprod d d);;
 
 let between limit_min limit_max v = min limit_max (max limit_min v);;
 
@@ -54,8 +52,8 @@ let calculate_j2 n = filter (fun x -> x mod 2 = 0) (range_incl 2 n);;
 
 let pareto_set j x1 nf =
   let jf = float_of_int j in
-  let fraction = (3.0 *. (jf-.2.0) /. (nf-.2.0)) in
-  let exponent = 0.5 *. (1.0 +. fraction) in
+  let fraction = 3.0 *. (jf-.2.0) /. (nf-.2.0) in
+  let exponent = 0.5 +. 0.5 *. fraction in
   x1**exponent;;
 
 let f12sum jn x x1 nf = lsum (map (fun j ->
@@ -64,8 +62,8 @@ let f12sum jn x x1 nf = lsum (map (fun j ->
 
 let f12common x =
   let n  = length x in
-  let nf = float_of_int n in
-  let x1 = hd x in
+  let nf = float_of_int n
+  and x1 = hd x in
   (n, nf, x1);;
 
 let f1 x =
@@ -97,8 +95,8 @@ let weight_neighbors weights t =
 
 let dominates v1 v2 =
   let c = combine v1 v2 in
-  for_all (fun (x1, x2) -> x1 >= x2) c &&
-  exists  (fun (x1, x2) -> x1 >  x2) c;;
+  for_all (fun (x1, x2) -> x1 <= x2) c &&
+  exists  (fun (x1, x2) -> x1 <  x2) c;;
 
 let recombine s1 s2 = map (fun (x1, x2) -> (x1 +. x2) /. 2.0) (combine s1 s2);;
 
@@ -150,7 +148,7 @@ let rec moead solutions neighbors weights fs ep = function
 let _ =
   let solutions_n = 300 in
   let neighborhood_size = 3 in
-  let iterations = 10 in
+  let iterations = 100 in
   let vec_dimension = 10 in
 
   let weights = calculate_weight_vectors2 solutions_n in
@@ -161,7 +159,7 @@ let _ =
 
   let ep = moead initial_solutions neighbors weights fs [] iterations in
 
-  print_endline "EP:";
+  (*print_endline "EP:";*)
   print_float_list_list ep;
-  Printf.printf "Number of elements in EP: %d\n" (length ep);
+  (* Printf.printf "Number of elements in EP: %d\n" (length ep); *)
 ;
