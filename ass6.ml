@@ -21,6 +21,8 @@ let flsum = fold_left (+.) 0.0;;
 
 let last = foldl1 (fun _ y -> y);;
 
+let print_int_list = iter (Printf.printf "%d ");;
+
 let dist2 (x1, y1) (x2, y2) =
   let dx = x2 - x1 in
   let dy = y2 - y1 in
@@ -69,8 +71,8 @@ let round_trip_dist cities dists path =
 (*** Parameters ***)
 
 let ant_population = 50
-and evaporation_factor = 0.8
-and iterations = 200
+and evaporation_factor = 0.2
+and iterations = 150
 and random_init = 1;;
 
 
@@ -106,14 +108,13 @@ let rec aco cities dists pheromone = function
   let min_path = calculate_min_path cities dists pheromone in
   pheromone_update pheromone (snd min_path) 1.0;
 
-  let pheromone = Array.map (Array.map (( *. ) evaporation_factor)) pheromone in
+  let pheromone =
+    Array.map (Array.map (( *. ) (1.0 -. evaporation_factor))) pheromone in
 
   printf "Shortest path length: %f\n" (fst min_path);
   flush stdout;
 
   aco cities dists pheromone (n-1);;
-
-let print_int_list = iter (Printf.printf "%d ");;
 
 let _ =
   Random.init random_init;
