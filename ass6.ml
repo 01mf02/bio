@@ -71,6 +71,7 @@ let round_trip_dist cities dists path =
 (*** Parameters ***)
 
 let ant_population = 50
+and pheromone_delta = 1.0
 and evaporation_factor = 0.2
 and iterations = 150
 and random_init = 1;;
@@ -106,7 +107,7 @@ let rec aco cities dists pheromone = function
   0 -> pheromone
 | n ->
   let min_path = calculate_min_path cities dists pheromone in
-  pheromone_update pheromone (snd min_path) 1.0;
+  pheromone_update pheromone (snd min_path) pheromone_delta;
 
   let pheromone =
     Array.map (Array.map (( *. ) (1.0 -. evaporation_factor))) pheromone in
