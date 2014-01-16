@@ -67,7 +67,6 @@ let round_trip_dist cities dists path =
   flsum (map (fun (c1, c2) -> dists c1 c2) (pairs_of_path path));;
 
 
-
 (*** Parameters ***)
 
 let ant_population = 50
